@@ -101,10 +101,10 @@ return Digivote.getElections() || defaultElections;
 }
 function seedAccounts() {
 const predefined = [
-{ id: 'admin_001', username: 'Admin', email: 'admin@digivote.io', password: 'Admin@2025', avatar: 'A', joinedAt: 'Jan 2025', role: 'Administrator', status: 'active', canVote: true },
-{ id: 'user_001', username: 'Dipesh', email: 'dipesh@digivote.io', password: 'Dipesh@451', avatar: 'D', joinedAt: 'Jan 2025', role: 'Voter', status: 'active', canVote: true },
-{ id: 'user_002', username: 'Rushab', email: 'rushab@digivote.io', password: 'Rushab@123', avatar: 'R', joinedAt: 'Jan 2025', role: 'Voter', status: 'active', canVote: true },
-{ id: 'user_003', username: 'Mohd Kaif', email: 'kaif@digivote.io', password: 'Kaif@786', avatar: 'MK', joinedAt: 'Jan 2025', role: 'Voter', status: 'active', canVote: true },
+{ id: 'admin_001', username: 'Admin', email: 'admin@digivote.io', password: 'Admin@2025', avatar: 'A', joinedAt: 'Jan 2025', role: 'Administrator' },
+{ id: 'user_001', username: 'Dipesh', email: 'dipesh@digivote.io', password: 'Dipesh@451', avatar: 'D', joinedAt: 'Jan 2025', role: 'Voter' },
+{ id: 'user_002', username: 'Rushab', email: 'rushab@digivote.io', password: 'Rushab@2025', avatar: 'R', joinedAt: 'Jan 2025', role: 'Voter' },
+{ id: 'user_003', username: 'Mohd Kaif', email: 'kaif@digivote.io', password: 'Kaif@786', avatar: 'MK', joinedAt: 'Jan 2025', role: 'Voter' },
 ];
 let users = Digivote.getUsers();
 predefined.forEach(p => {
@@ -142,38 +142,18 @@ const signupBtn = document.getElementById('nav-signup');
 if (loginBtn) loginBtn.style.display = user ? 'none' : '';
 if (signupBtn) signupBtn.style.display = user ? 'none' : '';
 const authBar = document.getElementById('auth-topbar');
-if (authBar) {
-const loginA  = document.getElementById('auth-login-btn');
-const signupA = document.getElementById('auth-signup-btn');
-if (user) {
-if (loginA)  loginA.style.display  = 'none';
-if (signupA) signupA.style.display = 'none';
-if (!document.getElementById('auth-logout-btn')) {
-const lb = document.createElement('button');
-lb.id = 'auth-logout-btn'; lb.className = 'btn btn-danger btn-sm';
-lb.textContent = '🚪 Logout'; lb.onclick = logout;
-authBar.appendChild(lb);
-}
-authBar.style.display = 'flex';
-} else {
-if (loginA)  loginA.style.display  = '';
-if (signupA) signupA.style.display = '';
-const ex = document.getElementById('auth-logout-btn');
-if (ex) ex.remove();
-authBar.style.display = 'flex';
-}
-}
-const oldLogout = document.getElementById('nav-logout');
-if (oldLogout) oldLogout.style.display = 'none';
+if (authBar) authBar.style.display = user ? 'none' : 'flex';
+const logoutBtn = document.getElementById('nav-logout');
+if (logoutBtn) logoutBtn.style.display = user ? '' : 'none';
 if (isAdmin) {
 const navLinks = document.querySelector('.nav-links');
-if (navLinks && !document.getElementById('admin-nav-link') && !navLinks.querySelector('a[href="admin.html"]')) {
+if (navLinks && !document.getElementById('admin-nav-link')) {
 const li = document.createElement('li');
 li.innerHTML = '<a href="admin.html" id="admin-nav-link" style="color:var(--accent-1);font-weight:700;">⚙️ Admin</a>';
 navLinks.appendChild(li);
 }
 const mobileMenuEl = document.getElementById('mobile-menu');
-if (mobileMenuEl && !document.getElementById('admin-mobile-link') && !mobileMenuEl.querySelector('a[href="admin.html"]')) {
+if (mobileMenuEl && !document.getElementById('admin-mobile-link')) {
 const a = document.createElement('a');
 a.href = 'admin.html'; a.id = 'admin-mobile-link';
 a.textContent = '⚙️ Admin'; a.style.cssText = 'color:var(--accent-1);font-weight:700;';
@@ -258,9 +238,7 @@ if (!validateEmail(email)) { showFieldError('login-email', 'Enter a valid email'
 if (!password) { showFieldError('login-password', 'Password is required'); return; }
 const users = Digivote.getUsers();
 const user = users.find(u => u.email === email && u.password === password);
-if (!user) { showFieldError('login-password', 'Invalid email or password'); showToast('Login failed — check your credentials', 'error'); return; }
-if (user.status === 'pending') { showToast('⏳ Your account is awaiting admin approval. Please wait.', 'warning'); return; }
-if (user.status === 'denied') { showToast('🚫 Your access has been denied by the admin.', 'error'); return; }
+if (!user) { showFieldError('login-password', 'Invalid email or password'); showToast('Login failed — use the quick-fill buttons below', 'error'); return; }
 Digivote.setUser(user);
 showToast('Welcome back, ' + user.username + '! 👋', 'success');
 setTimeout(() => window.location.replace(user.role === 'Administrator' ? 'admin.html' : 'dashboard.html'), 900);
@@ -304,11 +282,10 @@ if (password !== confirm) { showFieldError('signup-confirm','Passwords do not ma
 if (!valid) return;
 const users = Digivote.getUsers();
 if (users.find(u => u.email === email)) { showFieldError('signup-email','Email already registered'); return; }
-const newUser = { id:'user_'+Date.now(), username, email, password, avatar:username.charAt(0).toUpperCase(), joinedAt:new Date().toLocaleDateString(), role:'Voter', status:'pending', canVote:false };
-users.push(newUser);
-Digivote.saveUsers(users);
-showToast('✅ Registration submitted! Awaiting admin approval.','success');
-setTimeout(() => window.location.href='login.html', 2000);
+const newUser = { id:'user_'+Date.now(), username, email, password, avatar:username.charAt(0).toUpperCase(), joinedAt:new Date().toLocaleDateString(), role:'Voter' };
+users.push(newUser); Digivote.saveUsers(users); Digivote.setUser(newUser);
+showToast('Account created! Welcome to Digivote 🎉','success');
+setTimeout(() => window.location.href='dashboard.html', 1200);
 });
 }
 function initDashboard() {
@@ -342,7 +319,7 @@ listEl.innerHTML += `
 <span class="election-stat">🗳️ ${el.candidates.length} candidates</span>
 </div>
 <div class="flex gap-2">
-${!hasVoted ? (user.canVote !== false ? `<a href="vote.html?id=${el.id}" class="btn btn-primary btn-sm">Cast Vote →</a>` : '<span class="btn btn-secondary btn-sm" style="pointer-events:none;opacity:0.5;">🔒 Not Authorised</span>') : '<span class="btn btn-success btn-sm" style="pointer-events:none">✓ Vote Submitted</span>'}
+${!hasVoted ? `<a href="vote.html?id=${el.id}" class="btn btn-primary btn-sm">Cast Vote →</a>` : '<span class="btn btn-success btn-sm" style="pointer-events:none">✓ Vote Submitted</span>'}
 ${Digivote.isResultsApproved(el.id) || Digivote.isAdmin() ? `<a href="results.html?id=${el.id}" class="btn btn-secondary btn-sm">View Results</a>` : '<span class="btn btn-secondary btn-sm" style="pointer-events:none;opacity:0.5">🔒 Results Pending</span>'}
 </div>
 </div>`;
@@ -433,15 +410,14 @@ const election = elections.find(e=>e.id===electionId) || elections[0];
 const user = Digivote.getUser();
 const isAdmin = Digivote.isAdmin();
 const isApproved = Digivote.isResultsApproved(electionId);
-const canSeeResults = isAdmin || isApproved || (user && user.canVote === true);
-if (!canSeeResults) {
+if (!isAdmin && !isApproved) {
 const mainArea = document.querySelector('.container');
 if (mainArea) {
 mainArea.innerHTML = `
 <div style="text-align:center;padding:80px 20px;">
 <div style="font-size:4rem;margin-bottom:20px;">🔒</div>
 <h2 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.8rem;margin-bottom:12px;">Results Not Yet Available</h2>
-<p class="text-secondary" style="margin-bottom:28px;max-width:400px;margin-left:auto;margin-right:auto;">The admin has not approved your access yet. Please wait for approval.</p>
+<p class="text-secondary" style="margin-bottom:28px;max-width:400px;margin-left:auto;margin-right:auto;">The admin has not approved the results for this election yet. Please check back later.</p>
 <a href="dashboard.html" class="btn btn-primary">← Back to Dashboard</a>
 </div>`;
 }
@@ -591,36 +567,24 @@ elEl.innerHTML = elections.map(e=>`
 }
 const ulEl=document.getElementById('admin-users-list');
 if (ulEl) {
-const visibleUsers = users.filter(u => u.role !== 'Administrator' && u.status !== 'removed');
-if (visibleUsers.length === 0) {
-ulEl.innerHTML = '<div class="text-secondary text-sm" style="padding:16px;text-align:center;">No registered users yet.</div>';
+const nonAdmin = users.filter(u=>u.role!=='Administrator');
+if (nonAdmin.length===0) {
+ulEl.innerHTML='<div class="text-secondary text-sm" style="padding:10px;">No registered users yet.</div>';
 } else {
-ulEl.innerHTML = visibleUsers.map(u => {
-const isPending = !u.status || u.status === 'pending';
-const isDenied  = u.status === 'denied';
-const isActive  = u.status === 'active';
-const bgColor   = isPending ? 'rgba(255,169,77,0.07)' : isDenied ? 'rgba(157,23,77,0.05)' : 'var(--glass)';
-const border    = isPending ? '1px solid rgba(255,169,77,0.35)' : isDenied ? '1px solid rgba(157,23,77,0.2)' : '1px solid var(--glass-border)';
-const badge     = isPending
-  ? \`<span style="font-size:0.65rem;padding:3px 8px;border-radius:20px;background:rgba(255,169,77,0.18);color:#a06000;border:1px solid rgba(255,169,77,0.4);">⏳ Pending</span>\`
-  : isDenied
-  ? \`<span style="font-size:0.65rem;padding:3px 8px;border-radius:20px;background:rgba(157,23,77,0.12);color:#9d174d;border:1px solid rgba(157,23,77,0.25);">🚫 Denied</span>\`
-  : \`<span class="badge badge-success badge-dot" style="font-size:0.65rem;">Active</span>\`;
-const actions   = isActive
-  ? \`<button class="btn btn-sm" title="Remove user" style="font-size:0.68rem;padding:4px 9px;background:rgba(157,23,77,0.1);color:#9d174d;border:1px solid rgba(157,23,77,0.25);border-radius:8px;" onclick="removeUser('\${u.id}')">✕</button>\`
-  : \`<button class="btn btn-sm" title="Allow to cast vote" style="font-size:0.72rem;padding:5px 11px;background:rgba(0,170,120,0.13);color:#007a5e;border:1px solid rgba(0,170,120,0.35);border-radius:8px;font-weight:600;" onclick="allowUserVote('\${u.id}')">✅ Allow to Vote</button>
-     <button class="btn btn-sm" title="Deny access" style="font-size:0.72rem;padding:5px 11px;background:rgba(157,23,77,0.1);color:#9d174d;border:1px solid rgba(157,23,77,0.25);border-radius:8px;font-weight:600;" onclick="denyUser('\${u.id}')">🚫 Deny</button>\`;
-return \`<div style="display:flex;justify-content:space-between;align-items:center;padding:11px 13px;background:\${bgColor};border:\${border};border-radius:11px;margin-bottom:8px;">
+ulEl.innerHTML=nonAdmin.map(u=>`
+<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--glass);border:1px solid var(--glass-border);border-radius:10px;">
 <div class="flex items-center gap-2">
-<div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent-1),var(--accent-3));display:grid;place-items:center;font-size:0.78rem;font-weight:700;color:#fff;">\${u.avatar||u.username.charAt(0).toUpperCase()}</div>
+<div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--accent-1),var(--accent-3));display:grid;place-items:center;font-size:0.75rem;font-weight:700;">${u.avatar||u.username.charAt(0)}</div>
 <div>
-<div class="text-sm font-bold">\${u.username}</div>
-<div class="text-xs text-muted">\${u.email}</div>
+<div class="text-sm font-bold">${u.username}</div>
+<div class="text-xs text-muted">${u.email}</div>
 </div>
 </div>
-<div class="flex gap-2 items-center">\${badge}\${actions}</div>
-</div>\`;
-}).join('');
+<div class="flex gap-2 items-center">
+<span class="badge badge-success badge-dot" style="font-size:0.65rem;">Active</span>
+<button class="btn btn-sm" style="font-size:0.68rem;padding:3px 8px;background:rgba(157,23,77,0.12);color:#9d174d;border:1px solid rgba(157,23,77,0.25);" onclick="removeUser('${u.id}')">✕</button>
+</div>
+</div>`).join('');
 }
 }
 const talliesEl=document.getElementById('admin-tallies');
@@ -799,35 +763,13 @@ document.getElementById('new-election-ends').value='';
 renderAdminPage();
 }
 function removeUser(userId) {
-if (!confirm('Remove this user? They will no longer appear here.')) return;
-const users = Digivote.getUsers();
-const idx = users.findIndex(u => u.id === userId);
-if (idx >= 0) { users[idx].status = 'removed'; users[idx].canVote = false; Digivote.saveUsers(users); }
+if (!confirm('Remove this user? This cannot be undone.')) return;
+const users = Digivote.getUsers().filter(u=>u.id!==userId);
+Digivote.saveUsers(users);
 const votes = Digivote.getVotes();
-for (const key of Object.keys(votes)) { if (key.endsWith('_' + userId)) delete votes[key]; }
+for (const key of Object.keys(votes)) { if (key.endsWith('_'+userId)) delete votes[key]; }
 Digivote.saveVotes(votes);
-showToast('User removed.', 'info');
-renderAdminPage();
-}
-function allowUserVote(userId) {
-const users = Digivote.getUsers();
-const idx = users.findIndex(u => u.id === userId);
-if (idx < 0) { showToast('User not found.', 'error'); return; }
-users[idx].status  = 'active';
-users[idx].canVote = true;
-Digivote.saveUsers(users);
-showToast('✅ User approved! They can now log in and see all voting details.', 'success');
-renderAdminPage();
-}
-function denyUser(userId) {
-if (!confirm('Deny this user? They will not be able to log in.')) return;
-const users = Digivote.getUsers();
-const idx = users.findIndex(u => u.id === userId);
-if (idx < 0) { showToast('User not found.', 'error'); return; }
-users[idx].status  = 'denied';
-users[idx].canVote = false;
-Digivote.saveUsers(users);
-showToast('🚫 User access denied.', 'warning');
+showToast('User removed.','info');
 renderAdminPage();
 }
 function clearAllData() {
@@ -862,6 +804,9 @@ const timer=setInterval(()=>{ current=Math.min(current+step,target); el.textCont
 });
 }
 document.addEventListener('DOMContentLoaded',()=>{
+const _u = Digivote.getUser();
+const _bar = document.getElementById('auth-topbar');
+if (_bar) _bar.style.display = _u ? 'none' : 'flex';
 initNavbar(); initTabs();
 const page=window.location.pathname.split('/').pop()||'index.html';
 if (page==='signup.html') initSignup();
