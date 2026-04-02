@@ -103,8 +103,8 @@ function seedAccounts() {
 const predefined = [
 { id: 'admin_001', username: 'Admin', email: 'admin@digivote.io', password: 'Admin@2025', avatar: 'A', joinedAt: 'Jan 2025', role: 'Administrator' },
 { id: 'user_001', username: 'Dipesh', email: 'dipesh@digivote.io', password: 'Dipesh@451', avatar: 'D', joinedAt: 'Jan 2025', role: 'Voter' },
-{ id: 'user_002', username: 'Rushab', email: 'rushab@digivote.io', password: 'Rushab@2025', avatar: 'R', joinedAt: 'Jan 2025', role: 'Voter' },
-{ id: 'user_003', username: 'Mohd Kaif', email: 'kaif@digivote.io', password: 'Kaif@786', avatar: 'MK', joinedAt: 'Jan 2025', role: 'Voter' },
+{ id: 'user_002', username: 'Rushab', email: 'rushab@digivote.io', password: 'Rushab@2025',avatar: 'R', joinedAt: 'Jan 2025', role: 'Voter' },
+{ id: 'user_003', username: 'Mohd Kaif', email: 'kaif@digivote.io', password: 'Faif@786', avatar: 'MK', joinedAt: 'Jan 2025', role: 'Voter' },
 ];
 let users = Digivote.getUsers();
 predefined.forEach(p => {
@@ -128,38 +128,94 @@ mobileMenu.classList.toggle('open');
 }
 const user = Digivote.getUser();
 const isAdmin = Digivote.isAdmin();
+
+// ── Avatar ──
 const avatarEl = document.getElementById('nav-avatar');
 if (avatarEl) {
-if (user) {
-avatarEl.textContent = user.username.charAt(0).toUpperCase();
-avatarEl.style.display = 'grid';
-} else {
-avatarEl.style.display = 'none';
+avatarEl.textContent = user ? user.username.charAt(0).toUpperCase() : '?';
+avatarEl.style.display = user ? 'grid' : 'none';
 }
-}
-const loginBtn = document.getElementById('nav-login');
-const signupBtn = document.getElementById('nav-signup');
-if (loginBtn) loginBtn.style.display = user ? 'none' : '';
-if (signupBtn) signupBtn.style.display = user ? 'none' : '';
+
+// ── Auth topbar: swap Login/Signup ↔ Logout ──
 const authBar = document.getElementById('auth-topbar');
-if (authBar) authBar.style.display = user ? 'none' : 'flex';
-const logoutBtn = document.getElementById('nav-logout');
-if (logoutBtn) logoutBtn.style.display = user ? '' : 'none';
-if (isAdmin) {
+if (authBar) {
+const loginA  = document.getElementById('auth-login-btn');
+const signupA = document.getElementById('auth-signup-btn');
+if (user) {
+// Hide login & signup
+if (loginA)  loginA.style.display = 'none';
+if (signupA) signupA.style.display = 'none';
+// Inject logout button once
+if (!document.getElementById('auth-logout-btn')) {
+const lb = document.createElement('button');
+lb.id = 'auth-logout-btn';
+lb.className = 'btn btn-danger btn-sm';
+lb.innerHTML = '🚪 Logout';
+lb.onclick = logout;
+authBar.appendChild(lb);
+}
+authBar.style.display = 'flex';
+} else {
+if (loginA)  loginA.style.display = '';
+if (signupA) signupA.style.display = '';
+const existingLb = document.getElementById('auth-logout-btn');
+if (existingLb) existingLb.remove();
+authBar.style.display = 'flex';
+}
+}
+
+// ── Hide old inline nav-logout (replaced by auth-topbar) ──
+const oldLogout = document.getElementById('nav-logout');
+if (oldLogout) oldLogout.style.display = 'none';
+
+// ── Inject Logout tab into nav-links when logged in ──
 const navLinks = document.querySelector('.nav-links');
-if (navLinks && !document.getElementById('admin-nav-link')) {
+if (navLinks) {
+if (user && !document.getElementById('nav-logout-tab')) {
+const li = document.createElement('li');
+li.innerHTML = '<a href="#" id="nav-logout-tab" onclick="logout();return false;" style="color:var(--accent-3);font-weight:600;">🚪 Logout</a>';
+navLinks.appendChild(li);
+} else if (!user) {
+const existing = document.getElementById('nav-logout-tab');
+if (existing) existing.parentElement.remove();
+}
+}
+
+// ── Inject Logout into mobile menu when logged in ──
+const mobileMenuEl = document.getElementById('mobile-menu');
+if (mobileMenuEl) {
+if (user && !document.getElementById('mobile-logout-tab')) {
+const a = document.createElement('a');
+a.href = '#'; a.id = 'mobile-logout-tab';
+a.textContent = '🚪 Logout';
+a.onclick = (e) => { e.preventDefault(); logout(); };
+a.style.cssText = 'color:var(--accent-3);font-weight:600;';
+mobileMenuEl.appendChild(a);
+} else if (!user) {
+const existing = document.getElementById('mobile-logout-tab');
+if (existing) existing.remove();
+}
+}
+
+// ── Admin nav link — inject only if not already present ──
+if (isAdmin) {
+if (navLinks && !document.getElementById('admin-nav-link') && !navLinks.querySelector('a[href="admin.html"]')) {
 const li = document.createElement('li');
 li.innerHTML = '<a href="admin.html" id="admin-nav-link" style="color:var(--accent-1);font-weight:700;">⚙️ Admin</a>';
-navLinks.appendChild(li);
+// Insert before logout tab
+const logoutTab = document.getElementById('nav-logout-tab');
+if (logoutTab) navLinks.insertBefore(li, logoutTab.parentElement);
+else navLinks.appendChild(li);
 }
-const mobileMenuEl = document.getElementById('mobile-menu');
-if (mobileMenuEl && !document.getElementById('admin-mobile-link')) {
+if (mobileMenuEl && !document.getElementById('admin-mobile-link') && !mobileMenuEl.querySelector('a[href="admin.html"]')) {
 const a = document.createElement('a');
 a.href = 'admin.html'; a.id = 'admin-mobile-link';
 a.textContent = '⚙️ Admin'; a.style.cssText = 'color:var(--accent-1);font-weight:700;';
 mobileMenuEl.insertBefore(a, mobileMenuEl.firstChild);
 }
 }
+
+// ── Active link highlight ──
 const path = window.location.pathname.split('/').pop() || 'index.html';
 document.querySelectorAll('.nav-links a, .mobile-menu a').forEach(a => {
 if (a.getAttribute('href') === path) a.classList.add('active');
@@ -804,9 +860,6 @@ const timer=setInterval(()=>{ current=Math.min(current+step,target); el.textCont
 });
 }
 document.addEventListener('DOMContentLoaded',()=>{
-const _u = Digivote.getUser();
-const _bar = document.getElementById('auth-topbar');
-if (_bar) _bar.style.display = _u ? 'none' : 'flex';
 initNavbar(); initTabs();
 const page=window.location.pathname.split('/').pop()||'index.html';
 if (page==='signup.html') initSignup();
